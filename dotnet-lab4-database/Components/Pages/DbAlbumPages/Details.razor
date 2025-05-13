@@ -1,0 +1,172 @@
+﻿@page "/dbalbums/details"
+@using Microsoft.EntityFrameworkCore
+@using dotnet_lab4_database.Components 
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject ILogger<Details> Logger
+@using Microsoft.Extensions.Logging
+
+<PageTitle>Details</PageTitle>
+@rendermode InteractiveServer
+
+
+<h1>Details</h1>
+
+<div>
+    <h2>DbAlbum</h2>
+    <hr />
+    @if (dbalbum is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@dbalbum.Title</dd>
+            <dt class="col-sm-2">Artist</dt>
+            <dd class="col-sm-10">@dbalbum.Artist</dd>
+            <dt class="col-sm-2">Genre</dt>
+            <dd class="col-sm-10">@dbalbum.Genre</dd>
+            <dt class="col-sm-2">ReleaseDate</dt>
+            <dd class="col-sm-10">@dbalbum.ReleaseDate</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@dbalbum.Description</dd>
+            <dt class="col-sm-2">Rate</dt>
+            <dd class="col-sm-10">@dbalbum.Rate.ToString("F2") / 5</dd> @* Display rate with 2 decimal places *@
+            <dt class="col-sm-2">RateCount</dt>
+            <dd class="col-sm-10">@dbalbum.RateCount</dd>
+        </dl>
+
+        <hr />
+        <div>
+            <h4>Rate this Album (1-5)</h4>
+            @if (!string.IsNullOrEmpty(ratingMessage))
+            {
+                <div class="alert alert-info" role="alert">
+                    @ratingMessage
+                </div>
+            }
+            <div class="form-inline">
+                <label for="newRating" class="mr-2">Your Rating:</label>
+                <select @bind="NewUserRating" id="newRating" class="form-control mr-2" style="width: auto;">
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                </select>
+                <button class="btn btn-primary" @onclick="SubmitRatingAsync" disabled="@isSubmittingRating">
+                    @if (isSubmittingRating)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span> Submitting...</span>
+                    }
+                    else
+                    {
+                        <span>Test Submit Button</span> <!-- Zmień tekst dla jasności -->
+                    }
+                </button>
+            </div>
+        </div>
+        <hr />
+
+        <div>
+            <a href="@($"/dbalbums/edit?id={dbalbum.Id}")">Edit</a> |
+            <a href="@($"/dbalbums")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private DbAlbum? dbalbum;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    private int NewUserRating { get; set; } = 5; // Default to 5 stars, or your preferred default
+    private string? ratingMessage;
+    private bool isSubmittingRating = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Details.OnInitializedAsync - Attempting to load album with ID: {AlbumId}", Id);
+        using var context = DbFactory.CreateDbContext();
+        dbalbum = await context.DbAlbum.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (dbalbum is null)
+        {
+            Logger.LogWarning("Details.OnInitializedAsync - Album with ID: {AlbumId} not found. Redirecting to notfound.", Id);
+            NavigationManager.NavigateTo("notfound");
+        }
+        else
+        {
+            Logger.LogInformation("Details.OnInitializedAsync - Successfully loaded album: {AlbumTitle} (ID: {AlbumId})", dbalbum.Title, dbalbum.Id);
+        }
+    }
+
+    private async Task SubmitRatingAsync()
+    {
+        if (dbalbum is null)
+        {
+            ratingMessage = "Error: Album data not loaded.";
+            Logger.LogError("SubmitRatingAsync - Attempted to rate but dbalbum is null for ID: {AlbumId}", Id);
+            return;
+        }
+
+        if (NewUserRating < 1 || NewUserRating > 5)
+        {
+            ratingMessage = "Error: Invalid rating. Please select a rating between 1 and 5.";
+            Logger.LogWarning("SubmitRatingAsync - Invalid rating value {NewUserRating} submitted for album ID: {AlbumId}", NewUserRating, dbalbum.Id);
+            return;
+        }
+
+        isSubmittingRating = true;
+        ratingMessage = null; // Clear previous messages
+        Logger.LogInformation("SubmitRatingAsync - Submitting rating {NewUserRating} for album: {AlbumTitle} (ID: {AlbumId})", NewUserRating, dbalbum.Title, dbalbum.Id);
+
+        try
+        {
+            // Calculate new average rate
+            // New Average = ((Old Average * Old Count) + New Rating) / (Old Count + 1)
+            if (dbalbum.RateCount == 0)
+            {
+                dbalbum.Rate = NewUserRating; // If it's the first rating, the rate is just the new rating
+            }
+            else
+            {
+                dbalbum.Rate = ((dbalbum.Rate * dbalbum.RateCount) + NewUserRating) / (dbalbum.RateCount + 1);
+            }
+
+            dbalbum.RateCount++; // Increment the count of ratings
+
+            using var context = DbFactory.CreateDbContext();
+            context.DbAlbum.Update(dbalbum); // Mark the existing entity as modified
+            await context.SaveChangesAsync();
+
+            ratingMessage = $"Thank you! Your rating of {NewUserRating} has been submitted. New average: {dbalbum.Rate:F2}";
+            Logger.LogInformation("SubmitRatingAsync - Rating submitted successfully for album ID: {AlbumId}. New Rate: {NewRate}, New Count: {NewRateCount}", dbalbum.Id, dbalbum.Rate, dbalbum.RateCount);
+
+            // Optionally, you might want to reset NewUserRating or disable further immediate ratings
+            // NewUserRating = 5; // Reset to default
+        }
+        catch (Exception ex)
+        {
+            ratingMessage = "Error: Could not submit your rating. Please try again.";
+            Logger.LogError(ex, "SubmitRatingAsync - Error submitting rating for album ID: {AlbumId}", dbalbum.Id);
+        }
+        finally
+        {
+            isSubmittingRating = false;
+            StateHasChanged(); // Ensure UI updates with the new rating and message
+        }
+    }
+
+    private void TestClick()
+    {
+        Console.WriteLine("！！！！！！！！ TEST CLICKED！！！！！！！！");
+        Logger.LogWarning("！！！！！！！！ TEST CLICKED VIA LOGGER ！！！！！！！！");
+        ratingMessage = "TEST BUTTON CLICKED!"; // Zmieńmy jakąś prostą właściwość, żeby zobaczyć, czy UI się odświeży
+        // Nie rób tu StateHasChanged() celowo na razie, zobaczymy, czy samo przypisanie wystarczy
+    }
+}

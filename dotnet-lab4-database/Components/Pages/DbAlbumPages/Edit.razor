@@ -1,0 +1,114 @@
+﻿@page "/dbalbums/edit"
+@using Microsoft.EntityFrameworkCore
+@using dotnet_lab4_database.Components
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>DbAlbum</h2>
+<hr />
+@if (DbAlbum is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="DbAlbum" OnValidSubmit="UpdateDbAlbum" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="DbAlbum.Id" value="@DbAlbum.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="DbAlbum.Title" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="artist" class="form-label">Artist:</label>
+                    <InputText id="artist" @bind-Value="DbAlbum.Artist" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.Artist" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="genre" class="form-label">Genre:</label>
+                    <InputText id="genre" @bind-Value="DbAlbum.Genre" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.Genre" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="releasedate" class="form-label">ReleaseDate:</label>
+                    <InputText id="releasedate" @bind-Value="DbAlbum.ReleaseDate" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.ReleaseDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="DbAlbum.Description" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="rate" class="form-label">Rate:</label>
+                    <InputNumber id="rate" @bind-Value="DbAlbum.Rate" class="form-control" />
+                    <ValidationMessage For="() => DbAlbum.Rate" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/dbalbums">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private DbAlbum? DbAlbum { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        DbAlbum ??= await context.DbAlbum.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (DbAlbum is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateDbAlbum()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(DbAlbum!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!DbAlbumExists(DbAlbum!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/dbalbums");
+    }
+
+    private bool DbAlbumExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.DbAlbum.Any(e => e.Id == id);
+    }
+}

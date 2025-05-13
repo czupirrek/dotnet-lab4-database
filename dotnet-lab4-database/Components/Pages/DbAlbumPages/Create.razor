@@ -1,0 +1,70 @@
+﻿@page "/dbalbums/create"
+@using Microsoft.EntityFrameworkCore
+@using dotnet_lab4_database.Components
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>DbAlbum</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="DbAlbum" OnValidSubmit="AddDbAlbum" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="DbAlbum.Title" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="artist" class="form-label">Artist:</label> 
+                <InputText id="artist" @bind-Value="DbAlbum.Artist" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.Artist" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="genre" class="form-label">Genre:</label> 
+                <InputText id="genre" @bind-Value="DbAlbum.Genre" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.Genre" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="releasedate" class="form-label">ReleaseDate:</label> 
+                <InputText id="releasedate" @bind-Value="DbAlbum.ReleaseDate" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.ReleaseDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="DbAlbum.Description" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="rate" class="form-label">Rate:</label> 
+                <InputNumber id="rate" @bind-Value="DbAlbum.Rate" class="form-control" /> 
+                <ValidationMessage For="() => DbAlbum.Rate" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/dbalbums">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private DbAlbum DbAlbum { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddDbAlbum()
+    {
+        DbAlbum.RateCount = 1;
+        using var context = DbFactory.CreateDbContext();
+        context.DbAlbum.Add(DbAlbum);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/dbalbums");
+    }
+}

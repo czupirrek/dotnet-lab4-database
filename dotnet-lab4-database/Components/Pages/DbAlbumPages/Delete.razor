@@ -1,0 +1,77 @@
+﻿@page "/dbalbums/delete"
+@using Microsoft.EntityFrameworkCore
+@using dotnet_lab4_database.Components
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>DbAlbum</h2>
+    <hr />
+    @if (dbalbum is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@dbalbum.Title</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Artist</dt>
+            <dd class="col-sm-10">@dbalbum.Artist</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Genre</dt>
+            <dd class="col-sm-10">@dbalbum.Genre</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">ReleaseDate</dt>
+            <dd class="col-sm-10">@dbalbum.ReleaseDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@dbalbum.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Rate</dt>
+            <dd class="col-sm-10">@dbalbum.Rate</dd>
+        </dl>
+        <EditForm method="post" Model="dbalbum" OnValidSubmit="DeleteDbAlbum" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(dbalbum is null)">Delete</button> |
+            <a href="/dbalbums">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+
+
+@code {
+    private DbAlbum? dbalbum;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        dbalbum = await context.DbAlbum.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (dbalbum is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteDbAlbum()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.DbAlbum.Remove(dbalbum!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/dbalbums");
+    }
+}

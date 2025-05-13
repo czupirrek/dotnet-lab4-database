@@ -1,0 +1,41 @@
+﻿@page "/dbalbums"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using dotnet_lab4_database.Components
+@using dotnet_lab4_database.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="dbalbums/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.DbAlbum">
+    <PropertyColumn Property="dbalbum => dbalbum.Title" />
+    <PropertyColumn Property="dbalbum => dbalbum.Artist" />
+    <PropertyColumn Property="dbalbum => dbalbum.Genre" />
+    <PropertyColumn Property="dbalbum => dbalbum.ReleaseDate" />
+    <PropertyColumn Property="dbalbum => dbalbum.Description" />
+    <PropertyColumn Property="dbalbum => dbalbum.Rate" />
+
+    <TemplateColumn Context="dbalbum">
+        <a href="@($"dbalbums/edit?id={dbalbum.Id}")">Edit</a> |
+        <a href="@($"dbalbums/details?id={dbalbum.Id}")">Details</a> |
+        <a href="@($"dbalbums/delete?id={dbalbum.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

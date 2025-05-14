@@ -7,25 +7,42 @@
 @inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
 
 <PageTitle>Index</PageTitle>
-
+@rendermode InteractiveServer
 <h1>Index</h1>
 
-<p>
-    <a href="dbalbums/create">Create New</a>
-</p>
+<AuthorizeView>
+    <Authorized>
+        <p>
+            <a href="dbalbums/create">Create New</a>
+        </p>
+    </Authorized>
+    <NotAuthorized>
+        <p>
+            <a href="Account/Login">Login to create a new album</a>
+        </p>
+    </NotAuthorized>
+</AuthorizeView>
+
 
 <QuickGrid Class="table" Items="context.DbAlbum">
-    <PropertyColumn Property="dbalbum => dbalbum.Title" />
-    <PropertyColumn Property="dbalbum => dbalbum.Artist" />
-    <PropertyColumn Property="dbalbum => dbalbum.Genre" />
-    <PropertyColumn Property="dbalbum => dbalbum.ReleaseDate" />
-    <PropertyColumn Property="dbalbum => dbalbum.Description" />
-    <PropertyColumn Property="dbalbum => dbalbum.Rate" />
+    <PropertyColumn Property="dbalbum => dbalbum.Title" Sortable="true"/>
+    <PropertyColumn Property="dbalbum => dbalbum.Artist" Sortable="true" />
+    <PropertyColumn Property="dbalbum => dbalbum.Genre" Sortable="true" />
+    <PropertyColumn Property="dbalbum => dbalbum.ReleaseDate" Sortable="true" />
+    <PropertyColumn Property="dbalbum => dbalbum.Rate" Sortable="true" />
 
     <TemplateColumn Context="dbalbum">
-        <a href="@($"dbalbums/edit?id={dbalbum.Id}")">Edit</a> |
-        <a href="@($"dbalbums/details?id={dbalbum.Id}")">Details</a> |
-        <a href="@($"dbalbums/delete?id={dbalbum.Id}")">Delete</a>
+        <AuthorizeView>
+            <Authorized>
+                <a href="@($"dbalbums/edit?id={dbalbum.Id}")">Edit</a> |
+                <a href="@($"dbalbums/details?id={dbalbum.Id}")">Details</a> |
+                <a href="@($"dbalbums/delete?id={dbalbum.Id}")">Delete</a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="@($"dbalbums/details?id={dbalbum.Id}")">Details</a> 
+            </NotAuthorized>
+        </AuthorizeView>
+
     </TemplateColumn>
 </QuickGrid>
 

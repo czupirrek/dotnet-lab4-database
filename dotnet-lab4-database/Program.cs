@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using dotnet_lab4_database.Components;
 using dotnet_lab4_database.Components.Account;
 using dotnet_lab4_database.Data;
+using System.Net.NetworkInformation;
+using Blazorise;
+using Blazorise.Bootstrap;
+using Blazorise.Icons.FontAwesome;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +48,11 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services
+    .AddBlazorise(options => { options.Immediate = true; })
+    .AddBootstrapProviders()
+    .AddFontAwesomeIcons();
 
 var app = builder.Build();
 

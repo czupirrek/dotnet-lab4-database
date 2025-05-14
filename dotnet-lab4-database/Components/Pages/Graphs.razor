@@ -1,0 +1,45 @@
+﻿@page "/graphs"
+@rendermode InteractiveServer
+@inject ILogger<Graphs> Logger
+@using dotnet_lab4_database.Data
+@using Microsoft.EntityFrameworkCore
+@using Blazorise.Charts
+@inject IDbContextFactory<dotnet_lab4_database.Data.ApplicationDbContext> DbFactory
+
+@using Microsoft.Extensions.Logging
+
+<PageTitle>Graphs</PageTitle>
+
+<h1>Grafana</h1>
+<iframe src="https://grafana.koteczek.uk/public-dashboards/6f0ee6534ba34d2b9480033485f215f6?orgId=1"
+		width="100%"
+		height="450"
+		frameborder="0">
+</iframe>
+<h1>Albumy - liczba ocen (RateCount)</h1>
+
+<BarChart TItem="int" @ref="barChart" Style="max-width:1000px;max-height:400px;width:100%;" />
+
+
+
+@code {
+    private BarChart<int>? barChart;
+    private List<string> albumLabels = new();
+    private List<int> rateCounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        var albums = await context.DbAlbum.ToListAsync();
+        albumLabels = albums.Select(a => a.Title ?? $"Album {a.Id}").ToList();
+        rateCounts = albums.Select(a => a.RateCount).ToList();
+
+        await barChart!.Clear();
+        await barChart.AddLabelsDatasetsAndUpdate(albumLabels, new BarChartDataset<int>
+            {
+                Label = "RateCount",
+                Data = rateCounts,
+                BackgroundColor = "rgba(54, 162, 235, 0.6)"
+            });
+    }
+}

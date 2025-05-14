@@ -44,7 +44,17 @@
                 <label for="rate" class="form-label">Rate:</label> 
                 <InputNumber id="rate" @bind-Value="DbAlbum.Rate" class="form-control" /> 
                 <ValidationMessage For="() => DbAlbum.Rate" class="text-danger" /> 
-            </div>        
+            </div>
+            <div class="mb-3">
+                <label for="url" class="form-label">Url:</label>
+                <InputText id="url" @bind-Value="DbAlbum.Url" class="form-control" />
+                <ValidationMessage For="() => DbAlbum.Url" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="ratecount" class="form-label">RateCount:</label>
+                <InputNumber id="ratecount" @bind-Value="DbAlbum.RateCount" class="form-control" />
+                <ValidationMessage For="() => DbAlbum.RateCount" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -61,7 +71,7 @@
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddDbAlbum()
     {
-        DbAlbum.RateCount = 1;
+        // DbAlbum.RateCount = 1;
         using var context = DbFactory.CreateDbContext();
         context.DbAlbum.Add(DbAlbum);
         await context.SaveChangesAsync();
